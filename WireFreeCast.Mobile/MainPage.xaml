@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WireFreeCast.Mobile.MainPage">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="25" Padding="30" VerticalOptions="Center">
+
+            <Label Text="WireFreeCast" FontSize="36" FontAttributes="Bold" HorizontalOptions="Center" TextColor="#512BD4"/>
+
+            <Label x:Name="StatusLabel" Text="App is Idle 🛑" FontSize="18" FontAttributes="Bold" TextColor="Red" HorizontalOptions="Center" />
+
+            <Label x:Name="PinLabel" Text="PIN: ----" FontSize="32" FontAttributes="Bold" TextColor="DarkSlateGray" HorizontalOptions="Center" IsVisible="False" />
+
+            <Button x:Name="StartBtn" Text="Start Radar &amp; Share IP" Clicked="StartBtn_Clicked" BackgroundColor="Green" TextColor="White" HeightRequest="50" WidthRequest="220" CornerRadius="10"/>
+            <Button x:Name="StopBtn" Text="Stop Radar &amp; Disconnect" Clicked="StopBtn_Clicked" BackgroundColor="Red" TextColor="White" HeightRequest="50" WidthRequest="220" CornerRadius="10" IsEnabled="False"/>
+
+            <Frame BackgroundColor="#F0F0F0" BorderColor="Transparent" CornerRadius="8" Padding="15">
+                <Label Text="Rule: Jab tak aap Start nahi karenge, yeh app background mein 0% battery aur net istemal karegi. Recent apps se ura dene par sab kuch mukammal band ho jayega." 
+                       FontSize="12" TextColor="DimGray" HorizontalTextAlignment="Center"/>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

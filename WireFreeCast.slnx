@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="WireFreeCast.Desktop/WireFreeCast.Desktop.csproj" />
+  <Project Path="WireFreeCast.Mobile/WireFreeCast.Mobile.csproj" />
+</Solution>
