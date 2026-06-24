@@ -1,9 +1,9 @@
 using System;
 using System.Diagnostics;
-using System.IO;
+using System.Drawing;
 using System.Net;
-using System.Net.Sockets;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -13,15 +13,9 @@ namespace WireFreeCast.Desktop
 {
     public partial class Form1 : Form
     {
-        [DllImport("user32.dll")]
-        static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
-
-        [DllImport("user32.dll")]
-        static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-
-        [DllImport("user32.dll")]
-        static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
-
+        [DllImport("user32.dll")] static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
+        [DllImport("user32.dll")] static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        [DllImport("user32.dll")] static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
         const int GWL_STYLE = -16;
         const int WS_VISIBLE = 0x10000000;
 
@@ -37,13 +31,11 @@ namespace WireFreeCast.Desktop
 
         private async void button1_Click(object sender, EventArgs e)
         {
-            button1.Text = "Listening for Secure Signal...";
+            button1.Text = "Finding Device...";
             button1.Enabled = false;
 
-            // 1. Get IP and PIN (UDP se ya Fallback se)
-            var phoneData = await GetPhoneIpAsync();
-            string targetIp = phoneData.Ip;
-            string expectedPin = phoneData.Pin;
+            // 1. Sirf Universal IP Finder chale ga
+            string targetIp = await GetPhoneIpAsync();
 
             if (string.IsNullOrEmpty(targetIp))
             {
@@ -52,32 +44,24 @@ namespace WireFreeCast.Desktop
                 return;
             }
 
-            // 2. PIN Prompt (Har haal mein PIN mangega)
+            button1.Text = "Fetching Security PIN...";
+
+            // 🚀 2. UDP ki jagah TCP se Direct PIN fetch! (Firewall Proof)
+            string expectedPin = await FetchPinFromGatekeeperAsync(targetIp);
+
+            if (string.IsNullOrEmpty(expectedPin))
+            {
+                MessageBox.Show("Mobile se connect nahi ho pa raha! Mobile app mein 'Start Radar' daba hua hai? Agar haan, toh app ko ek dafa Stop kar ke Start karein.", "Gatekeeper Blocked", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ResetButton();
+                return;
+            }
+
+            // 3. Strict Verification
             string enteredPin = PromptForPin();
 
-            if (string.IsNullOrEmpty(enteredPin) || enteredPin.Length < 4)
-            {
-                MessageBox.Show("Security Alert: PIN likhna laazmi hai!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                ResetButton();
-                return;
-            }
-
-            // 3. Strict Verification (Agar UDP se PIN aaya tha)
-            if (!string.IsNullOrEmpty(expectedPin) && enteredPin != expectedPin)
+            if (enteredPin != expectedPin)
             {
                 MessageBox.Show("Galat PIN! Connection reject kar diya gaya hai.", "Security Alert", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                ResetButton();
-                return;
-            }
-
-            button1.Text = "Checking Gatekeeper...";
-
-            // 4. Final Security Check (TCP Gatekeeper - Yeh firewall se block nahi hota)
-            bool isAppStarted = await CheckGatekeeperAsync(targetIp);
-
-            if (!isAppStarted)
-            {
-                MessageBox.Show("Security Alert: Connection Blocked! Pehle Mobile App se 'Start Radar' dabayein.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 ResetButton();
                 return;
             }
@@ -139,25 +123,11 @@ namespace WireFreeCast.Desktop
 
         private string PromptForPin()
         {
-            Form prompt = new Form()
-            {
-                Width = 320,
-                Height = 160,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                Text = "Security Verification",
-                StartPosition = FormStartPosition.CenterScreen,
-                MaximizeBox = false,
-                MinimizeBox = false
-            };
+            Form prompt = new Form() { Width = 320, Height = 160, FormBorderStyle = FormBorderStyle.FixedDialog, Text = "Security Verification", StartPosition = FormStartPosition.CenterScreen, MaximizeBox = false, MinimizeBox = false };
             Label textLabel = new Label() { Left = 20, Top = 20, Text = "Mobile app par nazar aane wala 4-digit PIN likhein:", Width = 260 };
             TextBox textBox = new TextBox() { Left = 20, Top = 50, Width = 260, MaxLength = 4, Font = new System.Drawing.Font("Segoe UI", 12f) };
             Button confirmation = new Button() { Text = "Verify & Connect", Left = 160, Width = 120, Top = 85, DialogResult = DialogResult.OK };
-
-            prompt.Controls.Add(textLabel);
-            prompt.Controls.Add(textBox);
-            prompt.Controls.Add(confirmation);
-            prompt.AcceptButton = confirmation;
-
+            prompt.Controls.Add(textLabel); prompt.Controls.Add(textBox); prompt.Controls.Add(confirmation); prompt.AcceptButton = confirmation;
             return prompt.ShowDialog() == DialogResult.OK ? textBox.Text : "";
         }
 
@@ -165,53 +135,33 @@ namespace WireFreeCast.Desktop
         {
             try
             {
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(
-                    "SELECT * FROM Win32_PnPEntity WHERE Caption LIKE '%Audio Sink%' OR Caption LIKE '%Bluetooth Audio%'"
-                );
-
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE Caption LIKE '%Audio Sink%' OR Caption LIKE '%Bluetooth Audio%'");
                 foreach (ManagementObject device in searcher.Get())
                 {
-                    if (device["Status"].ToString() != "OK")
-                    {
-                        ManagementBaseObject inParams = device.GetMethodParameters("Enable");
-                        device.InvokeMethod("Enable", inParams, null);
-                    }
+                    if (device["Status"].ToString() != "OK") { device.InvokeMethod("Enable", device.GetMethodParameters("Enable"), null); }
                 }
             }
-            catch (Exception) { }
+            catch { }
         }
 
         private async Task MonitorConnectionAsync(string ip)
         {
-            int missedBeats = 0;
             while (scrcpyProcess != null && !scrcpyProcess.HasExited)
             {
-                await Task.Delay(1500);
-
-                bool isStillRunning = await CheckGatekeeperAsync(ip);
-
-                if (!isStillRunning)
+                await Task.Delay(500); // 0.5 sec fast disconnect
+                string pin = await FetchPinFromGatekeeperAsync(ip);
+                if (string.IsNullOrEmpty(pin))
                 {
-                    missedBeats++;
-                    if (missedBeats >= 2)
-                    {
-                        if (scrcpyProcess != null && !scrcpyProcess.HasExited) scrcpyProcess.Kill();
-                        await RunAdbCommandAsync("disconnect");
-
-                        this.Invoke((MethodInvoker)delegate {
-                            ResetButton();
-                            button1.Text = "Disconnected!";
-                            pictureBox1.Image = null;
-                            pictureBox1.Refresh();
-                        });
-                        break;
-                    }
+                    if (scrcpyProcess != null && !scrcpyProcess.HasExited) scrcpyProcess.Kill();
+                    await RunAdbCommandAsync("disconnect");
+                    this.Invoke((MethodInvoker)delegate { ResetButton(); button1.Text = "Disconnected!"; pictureBox1.Image = null; pictureBox1.Refresh(); });
+                    break;
                 }
-                else { missedBeats = 0; }
             }
         }
 
-        private async Task<bool> CheckGatekeeperAsync(string ip)
+        // 🚀 THE MAGIC: TCP GET PIN (No UDP, No Firewall Issues)
+        private async Task<string> FetchPinFromGatekeeperAsync(string ip)
         {
             try
             {
@@ -219,72 +169,44 @@ namespace WireFreeCast.Desktop
                 {
                     var result = client.BeginConnect(ip, 8889, null, null);
                     var success = await Task.Run(() => result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(2)));
-                    if (success) { client.EndConnect(result); return true; }
+                    if (success)
+                    {
+                        client.EndConnect(result);
+                        NetworkStream stream = client.GetStream();
+                        client.ReceiveTimeout = 1000;
+                        byte[] buffer = new byte[1024];
+                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                        return System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    }
                 }
             }
             catch { }
-            return false;
+            return null;
         }
 
-        private async Task<(string Ip, string Pin)> GetPhoneIpAsync()
+        // 🚀 THE FALLBACK: Jo hamesha IP pakarta hai
+        private async Task<string> GetPhoneIpAsync()
         {
             string foundIp = null;
-            string foundPin = null;
-
-            // 1. RADAR CHECK (Hawa wala signal)
             await Task.Run(() =>
             {
                 try
                 {
-                    using (UdpClient listener = new UdpClient())
+                    foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
                     {
-                        listener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                        listener.Client.Bind(new IPEndPoint(IPAddress.Any, 8888));
-                        listener.Client.ReceiveTimeout = 4000; // 4 second wait
-
-                        IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, 8888);
-                        byte[] bytes = listener.Receive(ref groupEP);
-                        string message = System.Text.Encoding.UTF8.GetString(bytes);
-
-                        if (message.StartsWith("WIREFREECAST_IP:"))
+                        if (ni.OperationalStatus == OperationalStatus.Up)
                         {
-                            string[] parts = message.Split(':');
-                            if (parts.Length >= 2) foundIp = parts[1];
-                            if (parts.Length >= 3) foundPin = parts[2];
-                        }
-                    }
-                }
-                catch { } // Yahan UDP fail ho jata hai firewall ki wajah se
-            });
-
-            // 2. THE SMART FALLBACK (Agar Firewall ne hawa wala signal block kar diya)
-            if (string.IsNullOrEmpty(foundIp))
-            {
-                await Task.Run(() =>
-                {
-                    try
-                    {
-                        foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
-                        {
-                            if (ni.OperationalStatus == OperationalStatus.Up)
+                            foreach (GatewayIPAddressInformation gateway in ni.GetIPProperties().GatewayAddresses)
                             {
-                                foreach (GatewayIPAddressInformation gateway in ni.GetIPProperties().GatewayAddresses)
-                                {
-                                    string gatewayIp = gateway.Address.ToString();
-                                    if (gatewayIp.Contains(".") && gatewayIp != "0.0.0.0")
-                                    {
-                                        foundIp = gatewayIp;
-                                        break; // Hotspot ka IP mil gaya!
-                                    }
-                                }
+                                string gatewayIp = gateway.Address.ToString();
+                                if (gatewayIp.Contains(".") && gatewayIp != "0.0.0.0") { foundIp = gatewayIp; break; }
                             }
                         }
                     }
-                    catch { }
-                });
-            }
-
-            return (foundIp, foundPin);
+                }
+                catch { }
+            });
+            return foundIp;
         }
 
         private Task<bool> RunAdbCommandAsync(string arguments)
@@ -294,12 +216,7 @@ namespace WireFreeCast.Desktop
                 try
                 {
                     ProcessStartInfo psi = new ProcessStartInfo { FileName = adbPath, Arguments = arguments, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true };
-                    using (Process p = Process.Start(psi))
-                    {
-                        string output = p.StandardOutput.ReadToEnd();
-                        p.WaitForExit();
-                        return output.Contains("connected") || output.Contains("already connected");
-                    }
+                    using (Process p = Process.Start(psi)) { string output = p.StandardOutput.ReadToEnd(); p.WaitForExit(); return output.Contains("connected") || output.Contains("already connected"); }
                 }
                 catch { return false; }
             });
