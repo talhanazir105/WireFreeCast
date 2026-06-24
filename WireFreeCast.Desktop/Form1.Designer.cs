@@ -36,7 +36,7 @@
             // 
             // button1
             // 
-            button1.Location = new Point(310, 692);
+            button1.Location = new Point(306, 758);
             button1.Name = "button1";
             button1.Size = new Size(224, 55);
             button1.TabIndex = 0;
@@ -46,7 +46,7 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.Location = new Point(283, 63);
+            pictureBox1.Location = new Point(275, 129);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(289, 623);
             pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
@@ -57,7 +57,7 @@
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI Black", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label1.Location = new Point(335, 19);
+            label1.Location = new Point(333, 76);
             label1.Name = "label1";
             label1.Size = new Size(169, 30);
             label1.TabIndex = 3;
@@ -67,7 +67,7 @@
             // 
             AutoScaleDimensions = new SizeF(10F, 22F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(920, 759);
+            ClientSize = new Size(920, 845);
             Controls.Add(label1);
             Controls.Add(pictureBox1);
             Controls.Add(button1);
