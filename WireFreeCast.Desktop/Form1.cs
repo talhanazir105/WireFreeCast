@@ -59,7 +59,7 @@ namespace WireFreeCast.Desktop
         private ModernToggle toggleScreen;
         private FlowLayoutPanel controlPanel;
         private Label lblScreenToggleText, lblLoading, lblBattery;
-        private Button btnSendFast, btnFetchFast, btnPasteText, btnScreenshot, btnRecord;
+        private Button btnSendFast, btnFetchFast, btnPasteText, btnScreenshot, btnRecord, btnStop;
         private NotifyIcon trayIcon;
 
         private string lastConnectedIp = "";
@@ -86,7 +86,8 @@ namespace WireFreeCast.Desktop
 
         private void CreatePerformanceControls()
         {
-            controlPanel = new FlowLayoutPanel() { Dock = DockStyle.Top, Height = 85, BackColor = Color.FromArgb(30, 30, 30), Padding = new Padding(10, 8, 10, 5), WrapContents = true };
+            // Panel height increased slightly to fit the new Stop button nicely
+            controlPanel = new FlowLayoutPanel() { Dock = DockStyle.Top, Height = 95, BackColor = Color.FromArgb(30, 30, 30), Padding = new Padding(10, 8, 10, 5), WrapContents = true };
 
             Label lblRes = new Label() { Text = "Res:", ForeColor = Color.White, AutoSize = true, Anchor = AnchorStyles.Left, Padding = new Padding(0, 5, 0, 0) };
             comboRes = new ComboBox() { Width = 70, DropDownStyle = ComboBoxStyle.DropDownList };
@@ -113,23 +114,27 @@ namespace WireFreeCast.Desktop
 
             lblBattery = new Label() { Text = "🔋 --%", ForeColor = Color.LightGreen, AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 10f, FontStyle.Bold), Padding = new Padding(15, 4, 0, 0) };
 
-            btnSendFast = new Button() { Text = "📤 Send", ForeColor = Color.White, BackColor = Color.DodgerBlue, FlatStyle = FlatStyle.Flat, Width = 75, Height = 26, Margin = new Padding(10, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
+            btnSendFast = new Button() { Text = "📤 Send", ForeColor = Color.White, BackColor = Color.DodgerBlue, FlatStyle = FlatStyle.Flat, Width = 70, Height = 26, Margin = new Padding(10, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
             btnSendFast.FlatAppearance.BorderSize = 0; btnSendFast.Click += BtnSendFast_Click;
 
-            btnFetchFast = new Button() { Text = "📥 Get", ForeColor = Color.White, BackColor = Color.MediumSeaGreen, FlatStyle = FlatStyle.Flat, Width = 75, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
+            btnFetchFast = new Button() { Text = "📥 Get", ForeColor = Color.White, BackColor = Color.MediumSeaGreen, FlatStyle = FlatStyle.Flat, Width = 70, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
             btnFetchFast.FlatAppearance.BorderSize = 0; btnFetchFast.Click += BtnFetchFast_Click;
 
-            btnPasteText = new Button() { Text = "📝 Paste", ForeColor = Color.White, BackColor = Color.DarkOrange, FlatStyle = FlatStyle.Flat, Width = 75, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
+            btnPasteText = new Button() { Text = "📝 Paste", ForeColor = Color.White, BackColor = Color.DarkOrange, FlatStyle = FlatStyle.Flat, Width = 70, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
             btnPasteText.FlatAppearance.BorderSize = 0; btnPasteText.Click += BtnPasteText_Click;
 
-            btnScreenshot = new Button() { Text = "📸 Shot", ForeColor = Color.White, BackColor = Color.DarkOrchid, FlatStyle = FlatStyle.Flat, Width = 75, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
+            btnScreenshot = new Button() { Text = "📸 Shot", ForeColor = Color.White, BackColor = Color.DarkOrchid, FlatStyle = FlatStyle.Flat, Width = 70, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
             btnScreenshot.FlatAppearance.BorderSize = 0; btnScreenshot.Click += BtnScreenshot_Click;
 
-            btnRecord = new Button() { Text = "🔴 Rec", ForeColor = Color.White, BackColor = Color.DarkRed, FlatStyle = FlatStyle.Flat, Width = 75, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
+            btnRecord = new Button() { Text = "🔴 Rec", ForeColor = Color.White, BackColor = Color.DarkRed, FlatStyle = FlatStyle.Flat, Width = 70, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
             btnRecord.FlatAppearance.BorderSize = 0; btnRecord.Click += BtnRecord_Click;
 
+            // 🚀 NAYA: Instant Stop Button
+            btnStop = new Button() { Text = "⏹️ Stop", ForeColor = Color.White, BackColor = Color.Crimson, FlatStyle = FlatStyle.Flat, Width = 70, Height = 26, Margin = new Padding(5, 5, 0, 0), Cursor = Cursors.Hand, Enabled = false };
+            btnStop.FlatAppearance.BorderSize = 0; btnStop.Click += BtnStop_Click;
+
             controlPanel.Controls.Add(lblRes); controlPanel.Controls.Add(comboRes); controlPanel.Controls.Add(lblFps); controlPanel.Controls.Add(comboFps); controlPanel.Controls.Add(lblBit); controlPanel.Controls.Add(comboBitrate); controlPanel.Controls.Add(lblScreenToggleText); controlPanel.Controls.Add(toggleScreen); controlPanel.Controls.Add(lblBattery);
-            controlPanel.Controls.Add(btnSendFast); controlPanel.Controls.Add(btnFetchFast); controlPanel.Controls.Add(btnPasteText); controlPanel.Controls.Add(btnScreenshot); controlPanel.Controls.Add(btnRecord);
+            controlPanel.Controls.Add(btnSendFast); controlPanel.Controls.Add(btnFetchFast); controlPanel.Controls.Add(btnPasteText); controlPanel.Controls.Add(btnScreenshot); controlPanel.Controls.Add(btnRecord); controlPanel.Controls.Add(btnStop);
 
             this.Controls.Add(controlPanel);
             if (button1 != null) button1.BringToFront();
@@ -138,10 +143,55 @@ namespace WireFreeCast.Desktop
             this.AllowDrop = true; this.DragEnter += Form1_DragEnter; this.DragDrop += Form1_DragDrop;
         }
 
+        // 🚀 MASTER DISCONNECT FUNCTION (Instant Kill)
+        private void DisconnectNow()
+        {
+            isAppActive = false;
+
+            // Foran process ko terminate karein bina wait kiye
+            try
+            {
+                if (scrcpyProcess != null && !scrcpyProcess.HasExited)
+                {
+                    scrcpyProcess.Kill();
+                    scrcpyProcess.Dispose();
+                }
+            }
+            catch { }
+
+            // Background mein ADB server ko clean karein
+            Task.Run(() => RunCmd("kill-server"));
+
+            // UI ko instant reset karein
+            this.Invoke((MethodInvoker)delegate {
+                lblLoading.Visible = false;
+                ResetButton();
+                btnSendFast.Enabled = false;
+                btnFetchFast.Enabled = false;
+                btnPasteText.Enabled = false;
+                btnScreenshot.Enabled = false;
+                btnRecord.Enabled = false;
+                btnStop.Enabled = false;
+                pictureBox1.Image = null; // Screen black out foran
+                pictureBox1.Refresh();
+                lblBattery.Text = "🔋 --%";
+            });
+        }
+
+        private void BtnStop_Click(object sender, EventArgs e)
+        {
+            DisconnectNow();
+            trayIcon.ShowBalloonTip(2000, "Disconnected", "Connection stopped instantly.", ToolTipIcon.Info);
+        }
+
         private void RunCmd(string arguments)
         {
-            ProcessStartInfo psi = new ProcessStartInfo { FileName = adbPath, Arguments = arguments, UseShellExecute = false, CreateNoWindow = true };
-            using (Process p = Process.Start(psi)) { p.WaitForExit(); }
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo { FileName = adbPath, Arguments = arguments, UseShellExecute = false, CreateNoWindow = true };
+                using (Process p = Process.Start(psi)) { p.WaitForExit(); }
+            }
+            catch { }
         }
 
         private async void BtnScreenshot_Click(object sender, EventArgs e)
@@ -277,7 +327,6 @@ namespace WireFreeCast.Desktop
             button1.Text = "Locating Device..."; button1.Enabled = false;
             string targetIp = await GetPhoneIpAsync();
 
-            // 🚨 Error 1 Fixed
             if (string.IsNullOrEmpty(targetIp))
             {
                 MessageBox.Show("Device IP not found! Please ensure both devices are connected to the same Wi-Fi or Hotspot network.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -287,14 +336,12 @@ namespace WireFreeCast.Desktop
             button1.Text = "Authenticating...";
             string expectedPin = await FetchPinFromGatekeeperAsync(targetIp);
 
-            // 🚨 Error 2 Fixed
             if (string.IsNullOrEmpty(expectedPin))
             {
                 MessageBox.Show("Connection refused by the device. Please ensure you have opened the WireFreeCast mobile app and tapped 'Start Radar'.", "Gatekeeper Blocked", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 ResetButton(); return;
             }
 
-            // 🚨 Error 3 Fixed
             if (PromptForPin() != expectedPin)
             {
                 MessageBox.Show("Incorrect PIN entered. Authentication failed.", "Security Alert", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -304,7 +351,9 @@ namespace WireFreeCast.Desktop
             button1.Text = "Initializing Engine...";
             await RunAdbCommandAsync($"connect {targetIp}:5555");
             lastConnectedIp = targetIp; isAppActive = true;
-            btnSendFast.Enabled = true; btnFetchFast.Enabled = true; btnPasteText.Enabled = true; btnScreenshot.Enabled = true; btnRecord.Enabled = true;
+
+            // Sab buttons ON karo connect hone pe
+            btnSendFast.Enabled = true; btnFetchFast.Enabled = true; btnPasteText.Enabled = true; btnScreenshot.Enabled = true; btnRecord.Enabled = true; btnStop.Enabled = true;
 
             StartScrcpyEngine(targetIp); button1.Text = "Connected!";
             _ = FetchBatteryLevelAsync(targetIp); _ = MonitorConnectionAsync(targetIp); _ = MonitorNotificationsAsync(targetIp);
@@ -326,14 +375,31 @@ namespace WireFreeCast.Desktop
             catch { lblLoading.Visible = false; isRestarting = false; }
         }
 
+        // 🚀 SUPER FAST 0.5s DISCONNECT DETECTOR
         private async Task MonitorConnectionAsync(string ip)
         {
-            int mb = 0; while (isAppActive) { await Task.Delay(2000); if (isRestarting) continue; if (string.IsNullOrEmpty(await FetchPinFromGatekeeperAsync(ip))) { mb++; if (mb >= 5) { isAppActive = false; try { scrcpyProcess.Kill(); } catch { } this.Invoke((MethodInvoker)delegate { ResetButton(); btnSendFast.Enabled = false; btnFetchFast.Enabled = false; btnPasteText.Enabled = false; btnScreenshot.Enabled = false; btnRecord.Enabled = false; }); break; } } else mb = 0; }
+            int mb = 0;
+            while (isAppActive)
+            {
+                await Task.Delay(500); // 0.5 second ka interval
+                if (isRestarting) continue;
+
+                if (string.IsNullOrEmpty(await FetchPinFromGatekeeperAsync(ip)))
+                {
+                    mb++;
+                    if (mb >= 2) // Total 1 second ka waqt (disconnect confirm karne ke liye)
+                    {
+                        DisconnectNow();
+                        break;
+                    }
+                }
+                else mb = 0;
+            }
         }
 
         private async Task<string> FetchPinFromGatekeeperAsync(string ip)
         {
-            try { using (TcpClient c = new TcpClient()) { var r = c.BeginConnect(ip, 8889, null, null); if (await Task.Run(() => r.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(3)))) { c.EndConnect(r); NetworkStream s = c.GetStream(); byte[] b = new byte[1024]; int br = await s.ReadAsync(b, 0, b.Length); return Encoding.UTF8.GetString(b, 0, br); } } } catch { }
+            try { using (TcpClient c = new TcpClient()) { var r = c.BeginConnect(ip, 8889, null, null); if (await Task.Run(() => r.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(2)))) { c.EndConnect(r); NetworkStream s = c.GetStream(); byte[] b = new byte[1024]; int br = await s.ReadAsync(b, 0, b.Length); return Encoding.UTF8.GetString(b, 0, br); } } } catch { }
             return null;
         }
 
@@ -352,6 +418,12 @@ namespace WireFreeCast.Desktop
         }
 
         private void ResetButton() { button1.Text = "Click To Connect"; button1.Enabled = true; }
-        protected override void OnFormClosing(FormClosingEventArgs e) { isAppActive = false; trayIcon.Dispose(); try { scrcpyProcess.Kill(); } catch { } RunAdbCommandAsync("kill-server").Wait(); Environment.Exit(0); base.OnFormClosing(e); }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            DisconnectNow();
+            trayIcon.Dispose();
+            base.OnFormClosing(e);
+        }
     }
 }
